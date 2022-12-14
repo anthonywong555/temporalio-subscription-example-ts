@@ -7,8 +7,8 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import fs from 'fs';
 import { Connection, WorkflowClient } from '@temporalio/client';
-import { example } from './workflows';
-import { Example_Request, Example_Response } from "./types";
+import { example, subscription } from './workflows';
+import { Example_Request, Example_Response, Subscribe_Request } from "./types";
 
 /**
  * Clients
@@ -35,6 +35,23 @@ const examplePostHandler = async(payload: Example_Request) => {
   }
 }
 
+const subscribePostHandler = async(payload: Subscribe_Request) => {
+  try {
+    console.log(`payload: ${JSON.stringify(payload)}`);
+    const env = getEnv();
+    const {taskQueue} = env;
+    const client = await getTemporalClient(env);
+    const result = await client.execute(subscription, {
+      taskQueue,
+      workflowId: `subscription-${Date.now()}`,
+      args: [payload],
+    });
+    return result;
+  } catch (e) {
+    throw e;
+  }
+}
+
 /**
  * Express Functions
  */
@@ -50,6 +67,45 @@ app.post('/example', async(request: any, response: any) => {
     response.send(e);
   }
 });
+
+app.post('/subscribe', async(request: any, response: any) => {
+  const {body} = request;
+
+  try {
+    const result = await subscribePostHandler(body);
+    response.send(result);
+  } catch(e) {
+    console.error(e);
+    response.send(e);
+  }
+});
+
+/*
+
+app.post('/unsubscribe', async(request: any, response: any) => {
+  const {body} = request;
+
+  try {
+    const result = await examplePostHandler(body);
+    response.send(result);
+  } catch(e) {
+    console.error(e);
+    response.send(e);
+  }
+});
+
+app.get('/details', async(request: any, response: any) => {
+  const {body} = request;
+
+  try {
+    const result = await examplePostHandler(body);
+    response.send(result);
+  } catch(e) {
+    console.error(e);
+    response.send(e);
+  }
+});
+*/
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}.\nNode Environment is on ${process.env.NODE_ENV} mode.`));
 
