@@ -1,4 +1,4 @@
-import { proxyActivities } from '@temporalio/workflow';
+import { proxyActivities, sleep } from '@temporalio/workflow';
 import type * as activities from './activities';
 import { Example_Request, Example_Response, Subscribe_Request, Subscribe_Response, Unsubscribe_Request, Unsubscribe_Response} from './types';
 
@@ -19,11 +19,18 @@ export async function example(request: Example_Request): Promise<Example_Respons
 
 export async function subscription(request: Subscribe_Request): Promise<Subscribe_Response> {
   try {
-    console.log(`request: ${JSON.stringify(request)}`);
+    let isSubscribe = true;
+    
+    while(isSubscribe) {
+      sleep('1 minute');
+      console.log('Hit!');
+    }
+    
+    sleep('1 minute');
+    console.log('1 minute sleep!');
+
     const {email} = request;
     const result = await echo(email);
-
-    // TODO: Add Sleep()
     return {status: result};
   } catch (e) {
     throw e;

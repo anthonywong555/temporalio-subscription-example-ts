@@ -37,16 +37,15 @@ const examplePostHandler = async(payload: Example_Request) => {
 
 const subscribePostHandler = async(payload: Subscribe_Request) => {
   try {
-    console.log(`payload: ${JSON.stringify(payload)}`);
     const env = getEnv();
     const {taskQueue} = env;
     const client = await getTemporalClient(env);
-    const result = await client.execute(subscription, {
+    await client.execute(subscription, {
       taskQueue,
       workflowId: `subscription-${Date.now()}`,
       args: [payload],
     });
-    return result;
+    return;
   } catch (e) {
     throw e;
   }
@@ -73,7 +72,7 @@ app.post('/subscribe', async(request: any, response: any) => {
 
   try {
     const result = await subscribePostHandler(body);
-    response.send(result);
+    response.send({'status': 'OK'});
   } catch(e) {
     console.error(e);
     response.send(e);
@@ -81,7 +80,6 @@ app.post('/subscribe', async(request: any, response: any) => {
 });
 
 /*
-
 app.post('/unsubscribe', async(request: any, response: any) => {
   const {body} = request;
 
