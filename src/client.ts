@@ -14,6 +14,7 @@ import { TemporalSingleton } from './temporal';
  */
 const app = express();
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 const PORT = process.env.PORT ? process.env.PORT : '3000';
@@ -22,7 +23,7 @@ const subscribePostHandler = async(payload: Subscribe_Request) => {
   try {
     const taskQueue = process.env.TEMPORAL_TASK_QUEUE || 'hello-world-mtls';
     const client = await TemporalSingleton.getWorkflowClient();
-    const {email} = payload;
+    const { email } = payload;
     const result = await client.execute(subscription, {
       taskQueue,
       workflowId: email,
@@ -40,9 +41,9 @@ const subscribePostHandler = async(payload: Subscribe_Request) => {
 
 app.post('/subscribe', async(request: any, response: any) => {
   try {
-    const {body} = request;
+    const { body } = request;
     response.send({'status': 'OK'});
-    const result = await subscribePostHandler(body);
+    await subscribePostHandler(body);
   } catch(e) {
     console.error(e);
     //response.send(e);
@@ -51,13 +52,15 @@ app.post('/subscribe', async(request: any, response: any) => {
 
 app.delete('/unsubscribe', async (request: any, response: any) => {
   try {
-    const {body} = request;
-    const {email} = body;
-
+    const { email } = request.body;
     const client = await TemporalSingleton.getWorkflowClient();
     const handle = client.getHandle(email);
-    const result = await handle.cancel();
-    response.send({'status': 'OK', result});
+
+    // Cancel the workflow
+    await handle.cancel();
+
+    // Send a Message back
+    response.send({'status': 'OK'});
   } catch (e) {
     console.error(e);
     response.send(e);
@@ -66,12 +69,14 @@ app.delete('/unsubscribe', async (request: any, response: any) => {
 
 app.get('/detail', async (request: any, response: any) => {
   try {
-    const {body} = request;
-    const {email} = body;
-
+    const { email } = request.query;
     const client = await TemporalSingleton.getWorkflowClient();
     const handle = client.getHandle(email);
+
+    // Query the Data
     const NumberOfEmailSent = await handle.query('NumberOfEmailSent');
+
+    // Reporting the data back
     response.send({NumberOfEmailSent});
   } catch (e) {
     console.error(e);
