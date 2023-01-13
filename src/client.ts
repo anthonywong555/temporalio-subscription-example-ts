@@ -5,10 +5,9 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import fs from 'fs';
-import { Connection, WorkflowClient } from '@temporalio/client';
-import { example, subscription } from './workflows';
-import { Example_Request, Example_Response, Subscribe_Request } from "./types";
+import { subscription } from './workflows';
+import { Subscribe_Request } from "./types";
+import { TemporalClientSingleton } from './temporalClient';
 
 /**
  * Clients
@@ -19,33 +18,17 @@ app.use(cors());
 
 const PORT = process.env.PORT ? process.env.PORT : '3000';
 
-const examplePostHandler = async(payload: Example_Request) => {
+const subscribePostHandler = async(payload: Subscribe_Request) => {
   try {
-    const env = getEnv();
-    const {taskQueue} = env;
-    const client = await getTemporalClient(env);
-    const result = await client.execute(example, {
+    const taskQueue = process.env.TTEMPORAL_TASK_QUEUE || 'hello-world-mtls';
+    const client = await TemporalClientSingleton.getInstance();
+    const {email} = payload;
+    const result = await client.execute(subscription, {
       taskQueue,
-      workflowId: `my-business-id-${Date.now()}`,
+      workflowId: email,
       args: [payload],
     });
     return result;
-  } catch (e) {
-    throw e;
-  }
-}
-
-const subscribePostHandler = async(payload: Subscribe_Request) => {
-  try {
-    const env = getEnv();
-    const {taskQueue} = env;
-    const client = await getTemporalClient(env);
-    await client.execute(subscription, {
-      taskQueue,
-      workflowId: `subscription-${Date.now()}`,
-      args: [payload],
-    });
-    return;
   } catch (e) {
     throw e;
   }
@@ -55,120 +38,45 @@ const subscribePostHandler = async(payload: Subscribe_Request) => {
  * Express Functions
  */
 
-app.post('/example', async(request: any, response: any) => {
-  const {body} = request;
-
-  try {
-    const result = await examplePostHandler(body);
-    response.send(result);
-  } catch(e) {
-    console.error(e);
-    response.send(e);
-  }
-});
-
 app.post('/subscribe', async(request: any, response: any) => {
-  const {body} = request;
-
   try {
+    const {body} = request;
     const result = await subscribePostHandler(body);
+    response.send({'status': 'OK', result});
+  } catch(e) {
+    console.error(e);
+    response.send(e);
+  }
+});
+
+app.delete('/unsubscribe', async (request: any, response: any) => {
+  try {
+    const {body} = request;
+    const {email} = body;
+
+    const client = await TemporalClientSingleton.getInstance();
+    const handle = client.getHandle(email);
+    const result = await handle.cancel();
     response.send({'status': 'OK'});
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     response.send(e);
   }
 });
 
-/*
-app.post('/unsubscribe', async(request: any, response: any) => {
-  const {body} = request;
-
+app.get('/detail', async (request: any, response: any) => {
   try {
-    const result = await examplePostHandler(body);
-    response.send(result);
-  } catch(e) {
+    const {body} = request;
+    const {email} = body;
+
+    const client = await TemporalClientSingleton.getInstance();
+    const handle = client.getHandle(email);
+    const NumberOfEmailSent = await handle.query('NumberOfEmailSent');
+    response.send({NumberOfEmailSent});
+  } catch (e) {
     console.error(e);
     response.send(e);
   }
-});
-
-app.get('/details', async(request: any, response: any) => {
-  const {body} = request;
-
-  try {
-    const result = await examplePostHandler(body);
-    response.send(result);
-  } catch(e) {
-    console.error(e);
-    response.send(e);
-  }
-});
-*/
+})
 
 app.listen(PORT, () => console.log(`Listening on ${PORT}.\nNode Environment is on ${process.env.NODE_ENV} mode.`));
-
-/**
- * Temporal Functions
- */
-
-const getTemporalClient = async ({
-  address,
-  namespace,
-  clientCertPath,
-  clientKeyPath,
-  serverNameOverride,
-  serverRootCACertificatePath
-}: Env) => {
-  let serverRootCACertificate: Buffer | undefined = undefined;
-  if (serverRootCACertificatePath) {
-    serverRootCACertificate = fs.readFileSync(serverRootCACertificatePath);
-  }
-
-  const connection = await Connection.connect({
-    address,
-    tls: {
-      serverNameOverride,
-      serverRootCACertificate,
-      clientCertPair: {
-        crt: fs.readFileSync(clientCertPath),
-        key: fs.readFileSync(clientKeyPath),
-      },
-    },
-  });
-  const client = new WorkflowClient({ connection, namespace });
-  return client;
-}
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new ReferenceError(`${name} environment variable is not defined`);
-  }
-  return value;
-}
-
-/**
- * Types
- */
-
-export interface Env {
-  address: string;
-  namespace: string;
-  clientCertPath: string;
-  clientKeyPath: string;
-  serverNameOverride?: string; // not needed if connecting to Temporal Cloud
-  serverRootCACertificatePath?: string; // not needed if connecting to Temporal Cloud
-  taskQueue: string;
-}
-
-export function getEnv(): Env {
-  return {
-    address: requiredEnv('TEMPORAL_ADDRESS'),
-    namespace: requiredEnv('TEMPORAL_NAMESPACE'),
-    clientCertPath: requiredEnv('TEMPORAL_CLIENT_CERT_PATH'),
-    clientKeyPath: requiredEnv('TEMPORAL_CLIENT_KEY_PATH'),
-    serverNameOverride: process.env.TEMPORAL_SERVER_NAME_OVERRIDE,
-    serverRootCACertificatePath: process.env.TEMPORAL_SERVER_ROOT_CA_CERT_PATH,
-    taskQueue: process.env.TEMPORAL_TASK_QUEUE || 'hello-world-mtls',
-  };
-}

@@ -5,6 +5,7 @@ dotenv.config();
 // @@@SNIPSTART typescript-mtls-worker
 import { Worker, NativeConnection } from '@temporalio/worker';
 import * as activities from './activities';
+import { TemporalClientSingleton } from './temporalClient';
 
 /**
  * Run a Worker with an mTLS connection, configuration is provided via environment variables.

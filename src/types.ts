@@ -7,11 +7,16 @@ export interface Example_Response {
 }
 
 export interface Subscribe_Request {
-  email: string;
+  email: string,
+  numberPhone?: string,
+  plan?: string
 }
 
 export interface Subscribe_Response {
-  status: string;
+  email?: string,
+  numberPhone?: string,
+  plan?: string,
+  id?: string
 }
 
 export interface Unsubscribe_Request {
