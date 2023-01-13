@@ -1,11 +1,3 @@
-export interface Example_Request {
-  message: string;
-}
-
-export interface Example_Response {
-  message: string;
-}
-
 export interface Subscribe_Request {
   email: string,
   numberPhone?: string,
