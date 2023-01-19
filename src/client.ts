@@ -5,7 +5,9 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { subscription } from './workflows';
+import * as EmailValidator from 'email-validator';
+import { v4 as uuidv4 } from 'uuid';
+import { subscription, cancelSubscription } from './workflows';
 import { Subscribe_Request } from "./types";
 import { TemporalSingleton } from './temporal';
 
@@ -18,22 +20,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 const PORT = process.env.PORT ? process.env.PORT : '3000';
+const emailToUUID = {} as any;
 
-const subscribePostHandler = async(payload: Subscribe_Request) => {
-  try {
-    const taskQueue = process.env.TEMPORAL_TASK_QUEUE || 'hello-world-mtls';
-    const client = await TemporalSingleton.getWorkflowClient();
-    const { email } = payload;
-    const result = await client.execute(subscription, {
-      taskQueue,
-      workflowId: email,
-      args: [payload],
-    });
-    return result;
-  } catch (e) {
-    throw e;
-  }
-}
 
 /**
  * Express Functions
@@ -42,22 +30,46 @@ const subscribePostHandler = async(payload: Subscribe_Request) => {
 app.post('/subscribe', async(request: any, response: any) => {
   try {
     const { body } = request;
-    response.send({'status': 'OK'});
-    await subscribePostHandler(body);
+    const taskQueue = process.env.TEMPORAL_TASK_QUEUE || 'hello-world-mtls';
+    const client = await TemporalSingleton.getWorkflowClient();
+    const email:string = body.email;
+
+    if(!EmailValidator.validate(email)) {
+      response.send({'status': 'Error! Not vaild email'});
+    } else if (emailToUUID[email]) {
+      response.send({'status': 'Error! Workflow has already been found'});
+    } else {
+      const uuid = uuidv4();
+      emailToUUID[email] = uuid;
+      body.uuid = uuid;
+      response.send(body);
+      await client.execute(subscription, {
+        taskQueue,
+        workflowId: uuid,
+        args: [body],
+      });
+    }
   } catch(e) {
     console.error(e);
-    //response.send(e);
+    response.send(e);
   }
 });
 
 app.delete('/unsubscribe', async (request: any, response: any) => {
   try {
     const { email } = request.body;
+
+    if(!emailToUUID[email]) {
+      throw new Error ('Error: Not a valid email.');
+    }
+
+    const uuid = emailToUUID[email];
+
     const client = await TemporalSingleton.getWorkflowClient();
-    const handle = client.getHandle(email);
+    const handle = client.getHandle(uuid);
 
     // Cancel the workflow
-    await handle.cancel();
+    await handle.signal(cancelSubscription);
 
     // Send a Message back
     response.send({'status': 'OK'});
@@ -70,8 +82,15 @@ app.delete('/unsubscribe', async (request: any, response: any) => {
 app.get('/detail', async (request: any, response: any) => {
   try {
     const { email } = request.query;
+
+    if(!emailToUUID[email]) {
+      throw new Error ('Error: Not a valid email.');
+    }
+
+    const uuid = emailToUUID[email];
+
     const client = await TemporalSingleton.getWorkflowClient();
-    const handle = client.getHandle(email);
+    const handle = client.getHandle(uuid);
 
     // Query the Data
     const NumberOfEmailSent = await handle.query('NumberOfEmailSent');

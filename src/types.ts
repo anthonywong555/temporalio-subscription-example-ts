@@ -1,14 +1,15 @@
 export interface Subscribe_Request {
   email: string,
   numberPhone?: string,
-  plan?: string
+  plan?: string,
+  frequency?: number
 }
 
 export interface Subscribe_Response {
   email?: string,
   numberPhone?: string,
   plan?: string,
-  id?: string
+  id?: string,
 }
 
 export interface Unsubscribe_Request {
