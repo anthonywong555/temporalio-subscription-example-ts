@@ -7,7 +7,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import * as EmailValidator from 'email-validator';
 import { v4 as uuidv4 } from 'uuid';
-import { subscription, cancelSubscription } from './workflows';
+import { subscription, cancelSubscription, getNumberOfEmailsSentQuery } from './workflows';
 import { TemporalSingleton } from './temporal';
 
 /**
@@ -19,29 +19,29 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 const PORT = process.env.PORT ? process.env.PORT : '3000';
-const emailToUUID = {} as any;
+const emailToUUID: Record<string, string> = {};
 
 /**
  * Express Functions
  */
 
-app.post('/subscribe', async (request: any, response: any) => {
+app.post('/subscribe', async (request, response) => {
   try {
     const { body } = request;
-    const taskQueue = process.env.TEMPORAL_TASK_QUEUE || 'hello-world-mtls';
+    const taskQueue = process.env.TEMPORAL_TASK_QUEUE || 'subscription';
     const client = await TemporalSingleton.getWorkflowClient();
     const email: string = body.email;
 
     if (!EmailValidator.validate(email)) {
-      response.send({ status: 'Error! Not vaild email' });
+      response.send({ status: 'Error! Invalid email' });
     } else if (emailToUUID[email]) {
-      response.send({ status: 'Error! Workflow has already been found' });
+      response.send({ status: 'Error! You are already subscribed' });
     } else {
       const uuid = uuidv4();
       emailToUUID[email] = uuid;
       body.uuid = uuid;
       response.send(body);
-      await client.execute(subscription, {
+      await client.start(subscription, {
         taskQueue,
         workflowId: uuid,
         args: [body],
@@ -53,7 +53,7 @@ app.post('/subscribe', async (request: any, response: any) => {
   }
 });
 
-app.delete('/unsubscribe', async (request: any, response: any) => {
+app.delete('/unsubscribe', async (request, response) => {
   try {
     const { email } = request.body;
 
@@ -77,7 +77,7 @@ app.delete('/unsubscribe', async (request: any, response: any) => {
   }
 });
 
-app.get('/detail', async (request: any, response: any) => {
+app.get('/detail', async (request, response) => {
   try {
     const { email } = request.query;
 
@@ -91,10 +91,10 @@ app.get('/detail', async (request: any, response: any) => {
     const handle = client.getHandle(uuid);
 
     // Query the Data
-    const NumberOfEmailSent = await handle.query('NumberOfEmailSent');
+    const numberOfEmailsSent = await handle.query(getNumberOfEmailsSentQuery);
 
     // Reporting the data back
-    response.send({ NumberOfEmailSent });
+    response.send({ numberOfEmailsSent });
   } catch (e) {
     console.error(e);
     response.send(e);

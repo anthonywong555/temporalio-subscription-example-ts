@@ -1,29 +1,29 @@
-export interface Subscribe_Request {
+export interface SubscribeRequest {
   email: string;
   numberPhone?: string;
   plan?: string;
   frequency?: number;
 }
 
-export interface Subscribe_Response {
+export interface SubscribeResponse {
   email?: string;
   numberPhone?: string;
   plan?: string;
   id?: string;
 }
 
-export interface Unsubscribe_Request {
+export interface UnsubscribeRequest {
   email: string;
 }
 
-export interface Unsubscribe_Response {
+export interface UnsubscribeResponse {
   status: string;
 }
 
-export interface Details_Request {
+export interface DetailsRequest {
   email: string;
 }
 
-export interface Details_Response {
+export interface DetailsResponse {
   status: string;
 }

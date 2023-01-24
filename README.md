@@ -1,4 +1,4 @@
-# temporalio-hello-world-mtls-rest-ts
+# Temporal Subscription Workflow Template in TypeScript
 
 This guide is the a fork of [Temporal Hello World MTLS](https://github.com/temporalio/samples-typescript/tree/main/hello-world-mtls).
 
@@ -19,7 +19,7 @@ This guide is the a fork of [Temporal Hello World MTLS](https://github.com/tempo
 5. Fill in the .env with the following:
 
 | key                       | value               |
-| ------------------------- | ------------------- |
+|---------------------------|---------------------|
 | TEMPORAL_ADDRESS          | foo.bar.tmprl.cloud |
 | TEMPORAL_NAMESPACE        | foo.bar             |
 | TEMPORAL_CLIENT_CERT_PATH | ./tls/ca.pem        |

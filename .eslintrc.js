@@ -32,7 +32,6 @@ module.exports = {
         varsIgnorePattern: '^_',
       },
     ],
-    '@typescript-eslint/no-explicit-any': 'off',
   },
   overrides: [
     {
