@@ -1,4 +1,4 @@
-import { proxyActivities, CancelledFailure, sleep, defineQuery, defineSignal, setHandler} from '@temporalio/workflow';
+import { proxyActivities, CancelledFailure, sleep, defineQuery, defineSignal, setHandler } from '@temporalio/workflow';
 import type * as activities from './activities';
 import { Subscribe_Request } from './types';
 
@@ -13,7 +13,7 @@ export const DEFAULT_FREQUENCY_IN_MIL_SEC = DEFAULT_FREQUENCY_IN_MIN * 60000;
 
 export async function subscription(request: Subscribe_Request): Promise<void> {
   try {
-    const {email, frequency = DEFAULT_FREQUENCY_IN_MIL_SEC} = request;
+    const { email, frequency = DEFAULT_FREQUENCY_IN_MIL_SEC } = request;
     let isSubscribe = true;
     let NumberOfEmailSent = 0;
 
@@ -25,16 +25,15 @@ export async function subscription(request: Subscribe_Request): Promise<void> {
     await sendEmail(email, 'Thank you for subscribing!');
     while (isSubscribe) {
       await sleep(frequency);
-      if(isSubscribe) {
+      if (isSubscribe) {
         NumberOfEmailSent++;
         await sendEmail(email, `Frequency Email: ${NumberOfEmailSent}!`);
       }
     }
 
-    if(!isSubscribe) {
+    if (!isSubscribe) {
       await sendEmail(email, 'We are sorry to see you go.');
     }
-
   } catch (error) {
     if (!(error instanceof CancelledFailure)) {
       throw error;

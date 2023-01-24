@@ -11,24 +11,17 @@ export class TemporalSingleton {
   private constructor() {}
 
   public static async getConnection(): Promise<Connection> {
-    if(!this.instanceOfConnection) {
+    if (!this.instanceOfConnection) {
       const env = TemporalSingleton.getEnv();
-      const {
-        address,
-        clientCertPath,
-        clientKeyPath,
-        serverNameOverride,
-        serverRootCACertificatePath,
-        isMTLS
-      } = env;
+      const { address, clientCertPath, clientKeyPath, serverNameOverride, serverRootCACertificatePath, isMTLS } = env;
 
       // Check to see if you are connection to Temporal Cloud or Temporal Local
-      if(isMTLS) {
+      if (isMTLS) {
         let serverRootCACertificate: Buffer | undefined = undefined;
         if (serverRootCACertificatePath) {
           serverRootCACertificate = fs.readFileSync(serverRootCACertificatePath);
         }
-    
+
         this.instanceOfConnection = await Connection.connect({
           address,
           tls: {
@@ -49,24 +42,17 @@ export class TemporalSingleton {
   }
 
   public static async getNativeConnection(): Promise<NativeConnection> {
-    if(!this.instanceOfNativeConnection) {
+    if (!this.instanceOfNativeConnection) {
       const env = TemporalSingleton.getEnv();
-      const {
-        address,
-        clientCertPath,
-        clientKeyPath,
-        serverNameOverride,
-        serverRootCACertificatePath,
-        isMTLS
-      } = env;
+      const { address, clientCertPath, clientKeyPath, serverNameOverride, serverRootCACertificatePath, isMTLS } = env;
 
       // Check to see if you are connection to Temporal Cloud or Temporal Local
-      if(isMTLS) {
+      if (isMTLS) {
         let serverRootCACertificate: Buffer | undefined = undefined;
         if (serverRootCACertificatePath) {
           serverRootCACertificate = fs.readFileSync(serverRootCACertificatePath);
         }
-    
+
         this.instanceOfNativeConnection = await NativeConnection.connect({
           address,
           tls: {
@@ -87,13 +73,13 @@ export class TemporalSingleton {
   }
 
   public static async getWorkflowClient(): Promise<WorkflowClient> {
-    if(!this.instanceOfWorkflowClient) {
+    if (!this.instanceOfWorkflowClient) {
       const env = TemporalSingleton.getEnv();
       const { namespace, isMTLS } = env;
       const connection = await this.getConnection();
-      this.instanceOfWorkflowClient = isMTLS ? 
-        new WorkflowClient({ connection, namespace }) : 
-        new WorkflowClient({ connection });
+      this.instanceOfWorkflowClient = isMTLS
+        ? new WorkflowClient({ connection, namespace })
+        : new WorkflowClient({ connection });
     }
 
     return this.instanceOfWorkflowClient;
@@ -116,7 +102,7 @@ export class TemporalSingleton {
       serverNameOverride: process.env.TEMPORAL_SERVER_NAME_OVERRIDE,
       serverRootCACertificatePath: process.env.TEMPORAL_SERVER_ROOT_CA_CERT_PATH,
       taskQueue: process.env.TEMPORAL_TASK_QUEUE || 'hello-world-mtls',
-      isMTLS: this.requiredEnv('MTLS') === 'true'
+      isMTLS: this.requiredEnv('MTLS') === 'true',
     };
   }
 }
@@ -129,5 +115,5 @@ interface Env {
   serverNameOverride?: string; // not needed if connecting to Temporal Cloud
   serverRootCACertificatePath?: string; // not needed if connecting to Temporal Cloud
   taskQueue: string;
-  isMTLS: boolean
+  isMTLS: boolean;
 }
