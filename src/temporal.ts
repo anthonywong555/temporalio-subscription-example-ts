@@ -8,8 +8,6 @@ export class TemporalSingleton {
   private static instanceOfConnection: Connection;
   private static instanceOfNativeConnection: NativeConnection;
 
-  private constructor() {}
-
   public static async getConnection(): Promise<Connection> {
     if (!this.instanceOfConnection) {
       const env = TemporalSingleton.getEnv();

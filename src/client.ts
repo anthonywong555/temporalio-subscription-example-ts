@@ -8,7 +8,6 @@ import bodyParser from 'body-parser';
 import * as EmailValidator from 'email-validator';
 import { v4 as uuidv4 } from 'uuid';
 import { subscription, cancelSubscription } from './workflows';
-import { Subscribe_Request } from './types';
 import { TemporalSingleton } from './temporal';
 
 /**
