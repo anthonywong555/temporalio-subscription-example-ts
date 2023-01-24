@@ -1,4 +1,4 @@
-import { proxyActivities, CancelledFailure, sleep, defineQuery, defineSignal, setHandler } from '@temporalio/workflow';
+import { CancelledFailure, defineQuery, defineSignal, proxyActivities, setHandler, sleep } from '@temporalio/workflow';
 import type * as activities from './activities';
 import type { SubscribeRequest } from './types';
 

@@ -1,14 +1,14 @@
 /**
  * Imports
  */
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
 import bodyParser from 'body-parser';
+import cors from 'cors';
+import 'dotenv/config';
 import * as EmailValidator from 'email-validator';
+import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { subscription, cancelSubscription, getNumberOfEmailsSentQuery } from './workflows';
 import { TemporalSingleton } from './temporal';
+import { cancelSubscription, getNumberOfEmailsSentQuery, subscription } from './workflows';
 
 /**
  * Clients

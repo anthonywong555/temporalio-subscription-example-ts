@@ -1,7 +1,7 @@
-import 'dotenv/config';
-import fs from 'fs';
 import { Connection, WorkflowClient } from '@temporalio/client';
 import { NativeConnection } from '@temporalio/worker';
+import 'dotenv/config';
+import fs from 'fs';
 
 export class TemporalSingleton {
   private static instanceOfWorkflowClient: WorkflowClient;

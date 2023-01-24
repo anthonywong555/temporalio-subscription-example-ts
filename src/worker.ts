@@ -1,5 +1,5 @@
-import 'dotenv/config';
 import { Worker } from '@temporalio/worker';
+import 'dotenv/config';
 import * as activities from './activities';
 import { TemporalSingleton } from './temporal';
 
