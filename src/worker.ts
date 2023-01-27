@@ -1,5 +1,5 @@
-import 'dotenv/config';
 import { Worker } from '@temporalio/worker';
+import 'dotenv/config';
 import * as activities from './activities';
 import { TemporalSingleton } from './temporal';
 
@@ -7,7 +7,7 @@ async function run() {
   const isMTLS = process.env.MTLS === 'true';
   const namespace = isMTLS ? process.env.TEMPORAL_NAMESPACE : 'default';
 
-  const taskQueue = process.env.TEMPORAL_TASK_QUEUE || 'hello-world-mtls';
+  const taskQueue = process.env.TEMPORAL_TASK_QUEUE || 'subscription';
   const connection = await TemporalSingleton.getNativeConnection();
 
   const worker = await Worker.create({

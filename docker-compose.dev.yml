@@ -9,7 +9,7 @@ services:
       - ./:/usr/src/app/web
     env_file: .env
     ports:
-      - "$PORT:$PORT"
+      - '$PORT:$PORT'
   worker:
     build:
       context: .
