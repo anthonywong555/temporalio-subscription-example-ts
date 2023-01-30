@@ -36,13 +36,11 @@ npm install
 7. Execute the following command:
 
 ```sh
-npm start
+npm run client.watch
 ```
 
 8. In another shell, execute the following command:
 
 ```sh
-npm run workflow
+npm run worker.watch
 ```
-
-9. It should print out `Hello, Temporal!`.

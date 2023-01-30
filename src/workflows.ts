@@ -1,9 +1,12 @@
 import { CancelledFailure, defineQuery, defineSignal, proxyActivities, setHandler, sleep } from '@temporalio/workflow';
-import type * as activities from './activities';
+import type * as activities from './email/activites';
 import type { SubscribeRequest } from './types';
 
-const { sendEmail } = proxyActivities<typeof activities>({
+const { sendEmailActivity } = proxyActivities<typeof activities>({
   startToCloseTimeout: '1 minute',
+  retry: {
+    maximumAttempts: 3
+  }
 });
 
 export const getNumberOfEmailsSentQuery = defineQuery<number>('getNumberOfEmailsSent');
@@ -17,22 +20,29 @@ export async function subscription(request: SubscribeRequest): Promise<void> {
     let isSubscribe = true;
     let numberOfEmailsSent = 0;
 
+    // Build EmailRequestActivity
+    const emailRequest = {
+      provider: 'SendGrid',
+      toEmailAddress: email,
+      fromEmailAddress: ''
+    };
+
     // Setup Handlers
     setHandler(getNumberOfEmailsSentQuery, () => numberOfEmailsSent);
     setHandler(cancelSubscription, () => void (isSubscribe = false));
 
     // Send a Welcome Message.
-    await sendEmail(email, 'Thank you for subscribing!');
+    await sendEmailActivity({subject: 'Greetings', body: 'Thank you for subscribing!', ...emailRequest});
     while (isSubscribe) {
       await sleep(frequency);
       if (isSubscribe) {
         numberOfEmailsSent++;
-        await sendEmail(email, `Frequency Email: ${numberOfEmailsSent}!`);
+        await sendEmailActivity({subject: 'Frequency Email', body: `This email is number ${numberOfEmailsSent}!`, ...emailRequest});
       }
     }
 
     if (!isSubscribe) {
-      await sendEmail(email, 'We are sorry to see you go.');
+      await sendEmailActivity({subject: 'Goodbye Email', body: `We are sorry to see you go.`, ...emailRequest});
     }
   } catch (error) {
     if (!(error instanceof CancelledFailure)) {

@@ -1,6 +1,6 @@
 import { Worker } from '@temporalio/worker';
 import 'dotenv/config';
-import * as activities from './activities';
+import * as activities from './email/activites';
 import { TemporalSingleton } from './temporal';
 
 async function run() {

@@ -40,6 +40,7 @@ app.post('/subscribe', async (request, response) => {
       const uuid = uuidv4();
       emailToUUID[email] = uuid;
       body.uuid = uuid;
+      console.log(emailToUUID);
       response.send(body);
       await client.start(subscription, {
         taskQueue,
@@ -58,7 +59,8 @@ app.delete('/unsubscribe', async (request, response) => {
     const { email } = request.body;
 
     if (!emailToUUID[email]) {
-      throw new Error('Error: Not a valid email.');
+      response.send('Error: Not a valid email.');
+      return;
     }
 
     const uuid = emailToUUID[email];
@@ -79,10 +81,11 @@ app.delete('/unsubscribe', async (request, response) => {
 
 app.get('/detail', async (request, response) => {
   try {
-    const { email } = request.query;
+    const email = request.query.email as string;
 
     if (!emailToUUID[email]) {
-      throw new Error('Error: Not a valid email.');
+      response.send('Error: Not a valid email.');
+      return;
     }
 
     const uuid = emailToUUID[email];
